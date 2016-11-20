@@ -12,6 +12,12 @@ int coordinateToIndex(int x, int y, int n)
     return x + (y * n);
 }
 
+void indexToCoordinate(int i, int n, int* point)
+{
+    point[0] = i % n;
+    point[1] = i / n;
+}
+
 int carefulIntAdd(int a, int b)
 {
     if(a == INT_MAX || b == INT_MAX)
@@ -118,6 +124,15 @@ int	taskid,	        /* task ID - also used as seed number */
     MPI_Bcast(&inputSize, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
     MPI_Bcast(&n, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
 
+    if(pn > n)
+    {
+        if(taskid == MASTER)
+            printf ("You select too many processors to solve the data\n");
+
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        return rc;
+    }
+    
     // Non-master processes will need to create the sequence buffer for themselves
     if(taskid != MASTER)
     {
@@ -126,6 +141,36 @@ int	taskid,	        /* task ID - also used as seed number */
 
     // Broadcast the sequence to all processors
     MPI_Bcast(inputValue, inputSize, MPI_INT, MASTER, MPI_COMM_WORLD);
+    
+
+    int scounts[pn];    // The number of rows and columns a section along the axis responsible for
+    int displs[pn];     // The x and y coordinate where a row or column section starts
+    
+    displs[0] = 0;
+    
+    // Calculate the sections of the table each process will be responsible for
+    int baseCount = n / pn;
+    int remainder = n % pn;
+    
+    for(i = 0; i < pn; i++)
+    {
+        scounts[i] = baseCount;
+        
+        if(i < remainder)
+        {
+            scounts[i]++;
+        }
+        
+        if(i != 0)
+        {
+            displs[i] = displs[i - 1] + scounts[i - 1];
+        }
+    }
+    
+    int point[2];
+    indexToCoordinate(taskid, pn, point);
+    printf("Process %d is in section (%d, %d). X dpls %d and count %d. Y dpls %d and count %d.\n", taskid, point[0], point[1], displs[point[0]], scounts[point[0]], displs[point[1]], scounts[point[1]]);
+    
     
     free(inputValue);
     
