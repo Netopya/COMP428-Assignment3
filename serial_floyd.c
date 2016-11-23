@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 
 // http://stackoverflow.com/questions/3437404/min-and-max-in-c
 #define min(a,b) \
@@ -25,8 +26,10 @@ int carefulIntAdd(int a, int b)
 
 int main (int argc, char *argv[])
 {
-    //start the clock
-    clock_t begin = clock();
+    struct timeval start, end;
+
+    // Record the start time
+    gettimeofday(&start, NULL);
     
     // Open the input file
     FILE *myFile;
@@ -115,9 +118,11 @@ int main (int argc, char *argv[])
 
     free(inputValue);
     
-    // Measure the execution time
-    clock_t end = clock();
-    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    gettimeofday(&end, NULL);
     
-    printf("\nProgram took %10.8f seconds\n",time_spent);
+    // Measure the execution time
+    float endtime = ((end.tv_sec * 1000000 + end.tv_usec)
+        - (start.tv_sec * 1000000 + start.tv_usec)) / 1000000.0;
+    
+    printf("\nProgram took %10.8f seconds\n",endtime);
 }

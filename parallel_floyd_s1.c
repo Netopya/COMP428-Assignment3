@@ -39,12 +39,10 @@ int	taskid,	        /* task ID - also used as seed number */
 	numtasks,       /* number of tasks */
 	rc,             /* return code */
 	i;
-
-    // Start the timer
-    clock_t begin = clock();;
     
     struct timeval start, end;
 
+    // Record the start time
     gettimeofday(&start, NULL);
     
     MPI_Status status;
@@ -55,7 +53,7 @@ int	taskid,	        /* task ID - also used as seed number */
     MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
 
     // Seed the random number generator
-    unsigned seed =  (unsigned)(time(0) + taskid);
+    unsigned seed =  (unsigned)(time(0));
     srand(seed);
 
     int pn = sqrt(numtasks);
@@ -437,18 +435,13 @@ int	taskid,	        /* task ID - also used as seed number */
     
     if(taskid == MASTER)
     {
+        gettimeofday(&end, NULL);
+
         // Measure the execution time
-        clock_t endc = clock();
-        double time_spent = (double)(endc - begin) / CLOCKS_PER_SEC;
-
-          gettimeofday(&end, NULL);
-
         float endtime = ((end.tv_sec * 1000000 + end.tv_usec)
                   - (start.tv_sec * 1000000 + start.tv_usec)) / 1000000.0;
-        printf("End wall clock: %10.8f\n",  endtime);
           
-        printf("Program with %d processes took %10.8f seconds\n", numtasks, time_spent);
-
+        printf("Program with %d processes took %10.8f seconds\n", numtasks, endtime);
     }
     
     return 0;
