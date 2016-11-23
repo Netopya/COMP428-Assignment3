@@ -331,18 +331,13 @@ int	taskid,	        /* task ID - also used as seed number */
         {
             for(x = 0; x < scounts[point[0]]; x++)
             {
-                //if(i == k || j == k || i == j)
-                //    continue;
-
-                //if(coordinateToIndex(x + displs[point[0]],y + displs[point[1]],n) >= inputSize)
-                //    printf("l Process %d assert fail!\n", taskid);
+                int real_x = x + displs[point[0]];
+                int real_y = y + displs[point[1]];
+                if(real_x == k || real_y == k || real_x == real_y)
+                    continue;
                 
-                /*if(k==4)
-                    printf("n at k %d Process %d at (%d, %d) is comparing %d to %d plus %d and is getting %d\n", k, taskid, x, y, inputValue[coordinateToIndex(x + displs[point[0]],y + displs[point[1]],n)], rowbuffer[x], colbuffer[y], min(inputValue[coordinateToIndex(x + displs[point[0]],y + displs[point[1]],n)], carefulIntAdd(rowbuffer[x], colbuffer[y])));
-                    //printf("n Process %d got to x: %d, y: %d\n", taskid, x, y);*/
-                
-                inputValue[coordinateToIndex(x + displs[point[0]],y + displs[point[1]],n)] = 
-                    min(inputValue[coordinateToIndex(x + displs[point[0]],y + displs[point[1]],n)], 
+                inputValue[coordinateToIndex(real_x,real_y,n)] = 
+                    min(inputValue[coordinateToIndex(real_x,real_y,n)], 
                     carefulIntAdd(rowbuffer[x], colbuffer[y]));
                     
                 
@@ -365,11 +360,7 @@ int	taskid,	        /* task ID - also used as seed number */
             int receiveBufferSize = scounts[ppoint[0]] * scounts[ppoint[1]];
             int* receiveBuffer = malloc(receiveBufferSize * sizeof(int));
             
-            //printf("u Process %d receive size %d\n", i, receiveBufferSize);
-            
             MPI_Recv(receiveBuffer, receiveBufferSize, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            
-            //printf("t Received from process %d\n", i);
             
             for(y = 0; y < scounts[ppoint[1]]; y++)
             {
@@ -381,60 +372,45 @@ int	taskid,	        /* task ID - also used as seed number */
             
             free(receiveBuffer);
         }
-        
-        /*printf("The final buffer is:\n");
-        for(k = 0; k < n; k++)
-        {
-            for(i = 0; i < n; i++)
-            {
-                printf("%11d", inputValue[coordinateToIndex(i,k,n)]);
-            }
-            printf("\n");
-        }*/
     }
     else
     {
         int sendBufferSize = scounts[point[0]] * scounts[point[1]];
         int* sendBuffer = malloc(sendBufferSize * sizeof(int));
         
-        //printf("y Process %d coordinates: ", taskid);
         for(y = 0; y < scounts[point[1]]; y++)
         {
             for(x = 0; x < scounts[point[0]]; x++)
             {
-                //printf("(%d,%d)->%d value: ",x,y, coordinateToIndex(displs[point[0]] + x, displs[point[1]] + y, n), inputValue[coordinateToIndex(displs[point[0]] + x, displs[point[1]] + y, n)], x + y);
                 sendBuffer[x + (y * scounts[point[0]])] = inputValue[coordinateToIndex(displs[point[0]] + x, displs[point[1]] + y, n)];
             }
         }
-        //printf("\n");
-        
-        /*printf("u Process %d send size %d\n", taskid, sendBufferSize);
-        
-        printf("w Process %d send buffer: ", taskid);
-        for(i = 0; i < sendBufferSize; i++)
-        {
-            printf("%d ", sendBuffer[i]);
-        }
-        printf("\n");*/
-        
-        /*printf("x Process %d end buffer: ", taskid);
-        for(i = 0; i < inputSize; i++)
-        {
-            printf("%d ", inputValue[i]);
-        }
-        printf("\n");*/
             
         MPI_Send(sendBuffer, sendBufferSize, MPI_INT, MASTER, 0, MPI_COMM_WORLD);
         
         free(sendBuffer);
     }
     
-    free(inputValue);    
+ 
+    
     
     MPI_Finalize();
     
     if(taskid == MASTER)
     {
+        if(n < 20)
+        {
+            printf("The final buffer is:\n");
+            for(k = 0; k < n; k++)
+            {
+                for(i = 0; i < n; i++)
+                {
+                    printf("%11d", inputValue[coordinateToIndex(i,k,n)]);
+                }
+                printf("\n");
+            }
+        }        
+        
         gettimeofday(&end, NULL);
 
         // Measure the execution time
@@ -443,6 +419,8 @@ int	taskid,	        /* task ID - also used as seed number */
           
         printf("Program with %d processes took %10.8f seconds\n", numtasks, endtime);
     }
+    
+    free(inputValue);
     
     return 0;
 }

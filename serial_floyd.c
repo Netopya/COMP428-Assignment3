@@ -11,11 +11,17 @@
        __typeof__ (b) _b = (b); \
      _a < _b ? _a : _b; })
 
+// Convert an x, y coordinate on a graph of width n into
+//     an index representing the position of that coordinate
+//     within an array representation of the graph
 int coordinateToIndex(int x, int y, int n)
 {
     return x + (y * n);
 }
 
+// Carefully add two numbers, if one of the numbers is infinity,
+//     don't add and set the result infinity directly to 
+//     prevent overflow
 int carefulIntAdd(int a, int b)
 {
     if(a == INT_MAX || b == INT_MAX)
@@ -41,10 +47,14 @@ int main (int argc, char *argv[])
     printf("Welcome\n");
 
     int input;
+    
+    //Count the number of items in the input file
     while(!feof(myFile))
     {
+        // Look for a number
         int c = fscanf(myFile, "%d\t", &input);
 
+        // If in is not a number it may be an infinity string
         if(c != 1)
         {
             char word[16];
@@ -58,25 +68,23 @@ int main (int argc, char *argv[])
 
     int n = sqrt(inputSize);
 
-    //printf("Square root of %d it %d\n", inputSize, n);
-
+    // Confirm that there are a valid number of items
     if(!((n * n) == inputSize))
     {
         printf("The input does not have a square number of values\n");
         return 1;
     }
 
+    // Create the buffer to store the input values
     int* inputValue = malloc(inputSize * sizeof(int));
-
-
 
     rewind(myFile);
 
+    // Read input from the file
     int count = 0;
     while(!feof(myFile))
     {
         int c = fscanf(myFile, "%d", &inputValue[count]);
-        //printf("Read %d from file with a c of %d\n", inputValue[count], c);
 
         if(c != 1)
         {
@@ -92,6 +100,7 @@ int main (int argc, char *argv[])
 
     int i,j,k;
 
+    // Perform the Floyd's all pair algorithm
     for(k = 0; k < n; k++)
     {
         for(i = 0; i < n; i++)
@@ -106,16 +115,6 @@ int main (int argc, char *argv[])
         }
     }
 
-    /*printf("The final buffer is:\n");
-    for(k = 0; k < n; k++)
-    {
-        for(i = 0; i < n; i++)
-        {
-            printf("%11d", inputValue[coordinateToIndex(i,k,n)]);
-        }
-        printf("\n");
-    }*/
-
     free(inputValue);
     
     gettimeofday(&end, NULL);
@@ -125,4 +124,6 @@ int main (int argc, char *argv[])
         - (start.tv_sec * 1000000 + start.tv_usec)) / 1000000.0;
     
     printf("\nProgram took %10.8f seconds\n",endtime);
+    
+    return 0;
 }
