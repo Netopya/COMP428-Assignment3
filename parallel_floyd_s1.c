@@ -194,21 +194,21 @@ int	taskid,	        /* task ID - also used as seed number */
 
     int point[2];
     indexToCoordinate(taskid, pn, point);
-    printf("c Process %d is in section (%d, %d). X dpls %d and count %d. Y dpls %d and count %d.\n", taskid, point[0], point[1], displs[point[0]], scounts[point[0]], displs[point[1]], scounts[point[1]]);
+    //printf("c Process %d is in section (%d, %d). X dpls %d and count %d. Y dpls %d and count %d.\n", taskid, point[0], point[1], displs[point[0]], scounts[point[0]], displs[point[1]], scounts[point[1]]);
 
     int rowrank, rowSize;
     MPI_Comm row_comm;
     MPI_Comm_split(MPI_COMM_WORLD, point[1], 0, &row_comm);
     MPI_Comm_rank(row_comm,&rowrank);
     MPI_Comm_size(row_comm,&rowSize);
-    printf("a Process %d: row comm: %d, color %d. With rank: %d and size %d\n", taskid, row_comm, point[1], rowrank, rowSize);
+    //printf("a Process %d: row comm: %d, color %d. With rank: %d and size %d\n", taskid, row_comm, point[1], rowrank, rowSize);
     
     int colrank, colSize;
     MPI_Comm col_comm;
     MPI_Comm_split(MPI_COMM_WORLD, point[0], 0, &col_comm);
     MPI_Comm_rank(col_comm,&colrank);
     MPI_Comm_size(col_comm,&colSize);
-    printf("b Process %d: col comm: %d, color %d. With rank: %d and size %d\n", taskid, col_comm, point[0], colrank, colSize);
+    //printf("b Process %d: col comm: %d, color %d. With rank: %d and size %d\n", taskid, col_comm, point[0], colrank, colSize);
     
     /*printf("s Process %d buffer: ", taskid);
     for(i = 0; i < inputSize; i++)
@@ -222,12 +222,12 @@ int	taskid,	        /* task ID - also used as seed number */
     {
 
         
-        printf("e Process: %d, k: %d, n: %d\n", taskid, k, n);
+        //printf("e Process: %d, k: %d, n: %d\n", taskid, k, n);
         
         int k_in_p = kcounts[k];
         
         
-        printf("d Process %d at k %d read a inp of %d\n", taskid, k, k_in_p);
+        //printf("d Process %d at k %d read a inp of %d\n", taskid, k, k_in_p);
         
         if(k==0) 
         {
@@ -279,12 +279,16 @@ int	taskid,	        /* task ID - also used as seed number */
         MPI_Bcast(rowbuffer, scounts[point[0]], MPI_INT, k_in_p, col_comm);
         
         //printf("q Process %d row buffer size %d. Should be %d\n", taskid, sizeof(rowbuffer) / sizeof(int),  scounts[point[0]]);
-        /*printf("r Process %d row buffer: ", taskid);
-        for(i = 0; i < scounts[point[0]]; i++)
-        {
-            printf("%d ", rowbuffer[i]);
-        }
-        printf("\n");*/
+
+            /*printf("r at k %d Process %d row buffer: ", k, taskid);
+            for(i = 0; i < scounts[point[0]]; i++)
+            {
+                printf("%d ", rowbuffer[i]);
+            }
+            printf("\n");*/
+
+        
+
         for(i = 0; i < scounts[point[0]]; i++)
         {
             //printf("r Process %d, row buffer index %d, value %d\n", taskid, i, rowbuffer[i]);
@@ -301,13 +305,22 @@ int	taskid,	        /* task ID - also used as seed number */
             }
         }
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        //MPI_Barrier(MPI_COMM_WORLD);
         
         //printf("h at k %d Process %d expecting a col buffer of %d\n", k,taskid, scounts[point[1]]);
         MPI_Bcast(colbuffer, scounts[point[1]], MPI_INT, k_in_p, row_comm);
        // printf("j at k %d Process %d received a col buffer of %d\n", k,taskid, scounts[point[1]]);
         
         //printf("m Process %d Foo test %d\n", taskid,  rowbuffer[1] +  colbuffer[1]);
+        
+
+        /*printf("v at k %d Process %d col buffer: ", k, taskid);
+        for(i = 0; i < scounts[point[1]]; i++)
+        {
+            printf("%d ", colbuffer[i]);
+        }
+        printf("\n");*/
+
         
         for(y = 0; y < scounts[point[1]]; y++)
         {
@@ -319,16 +332,19 @@ int	taskid,	        /* task ID - also used as seed number */
                 //if(coordinateToIndex(x + displs[point[0]],y + displs[point[1]],n) >= inputSize)
                 //    printf("l Process %d assert fail!\n", taskid);
                 
-                if(k==0)
-                    //printf("n Process %d got to x: %d, y: %d\n", taskid, x, y);
+                /*if(k==4)
+                    printf("n at k %d Process %d at (%d, %d) is comparing %d to %d plus %d and is getting %d\n", k, taskid, x, y, inputValue[coordinateToIndex(x + displs[point[0]],y + displs[point[1]],n)], rowbuffer[x], colbuffer[y], min(inputValue[coordinateToIndex(x + displs[point[0]],y + displs[point[1]],n)], carefulIntAdd(rowbuffer[x], colbuffer[y])));
+                    //printf("n Process %d got to x: %d, y: %d\n", taskid, x, y);*/
                 
                 inputValue[coordinateToIndex(x + displs[point[0]],y + displs[point[1]],n)] = 
                     min(inputValue[coordinateToIndex(x + displs[point[0]],y + displs[point[1]],n)], 
                     carefulIntAdd(rowbuffer[x], colbuffer[y]));
+                    
+                
             }
         }
         
-        printf("k at k %d Process %d finished calculating\n", k,taskid);
+        //printf("k at k %d Process %d finished calculating\n", k,taskid);
         
         free(rowbuffer);
         free(colbuffer);
@@ -344,17 +360,17 @@ int	taskid,	        /* task ID - also used as seed number */
             int receiveBufferSize = scounts[ppoint[0]] * scounts[ppoint[1]];
             int* receiveBuffer = malloc(receiveBufferSize * sizeof(int));
             
-            printf("u Process %d receive size %d\n", i, receiveBufferSize);
+            //printf("u Process %d receive size %d\n", i, receiveBufferSize);
             
             MPI_Recv(receiveBuffer, receiveBufferSize, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             
-            printf("t Received from process %d\n", i);
+            //printf("t Received from process %d\n", i);
             
             for(y = 0; y < scounts[ppoint[1]]; y++)
             {
                 for(x = 0; x < scounts[ppoint[0]]; x++)
                 {
-                    inputValue[coordinateToIndex(displs[ppoint[0]] + x, displs[ppoint[1]] + y, n)] = receiveBuffer[x + y];
+                    inputValue[coordinateToIndex(displs[ppoint[0]] + x, displs[ppoint[1]] + y, n)] = receiveBuffer[x + (y * scounts[ppoint[0]])];
                 }
             }
             
@@ -376,16 +392,33 @@ int	taskid,	        /* task ID - also used as seed number */
         int sendBufferSize = scounts[point[0]] * scounts[point[1]];
         int* sendBuffer = malloc(sendBufferSize * sizeof(int));
         
+        //printf("y Process %d coordinates: ", taskid);
         for(y = 0; y < scounts[point[1]]; y++)
         {
             for(x = 0; x < scounts[point[0]]; x++)
             {
-                sendBuffer[x + y] = inputValue[coordinateToIndex(displs[point[0]] + x, displs[point[1]] + y, n)];
+                //printf("(%d,%d)->%d value: ",x,y, coordinateToIndex(displs[point[0]] + x, displs[point[1]] + y, n), inputValue[coordinateToIndex(displs[point[0]] + x, displs[point[1]] + y, n)], x + y);
+                sendBuffer[x + (y * scounts[point[0]])] = inputValue[coordinateToIndex(displs[point[0]] + x, displs[point[1]] + y, n)];
             }
         }
+        //printf("\n");
         
-        printf("u Process %d send size %d\n", taskid, sendBufferSize);
+        /*printf("u Process %d send size %d\n", taskid, sendBufferSize);
         
+        printf("w Process %d send buffer: ", taskid);
+        for(i = 0; i < sendBufferSize; i++)
+        {
+            printf("%d ", sendBuffer[i]);
+        }
+        printf("\n");*/
+        
+        /*printf("x Process %d end buffer: ", taskid);
+        for(i = 0; i < inputSize; i++)
+        {
+            printf("%d ", inputValue[i]);
+        }
+        printf("\n");*/
+            
         MPI_Send(sendBuffer, sendBufferSize, MPI_INT, MASTER, 0, MPI_COMM_WORLD);
         
         free(sendBuffer);
