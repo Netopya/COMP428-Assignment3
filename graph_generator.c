@@ -9,6 +9,10 @@
 
 int main (int argc, char *argv[])
 {
+    // Seed the random number generator
+    unsigned seed =  (unsigned)(time(0));
+    srand(seed);
+    
     if(argc < 2)
     {
         printf("You did not specify a size for the graph\n");

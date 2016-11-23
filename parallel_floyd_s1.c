@@ -4,6 +4,7 @@
 #include <time.h>
 #include <math.h>
 #include <limits.h>
+#include <sys/time.h>
 
 #define MASTER 0        /* task ID of master task */
 
@@ -41,7 +42,11 @@ int	taskid,	        /* task ID - also used as seed number */
 
     // Start the timer
     clock_t begin = clock();;
+    
+    struct timeval start, end;
 
+    gettimeofday(&start, NULL);
+    
     MPI_Status status;
 
     /* Obtain number of tasks and task ID */
@@ -75,7 +80,7 @@ int	taskid,	        /* task ID - also used as seed number */
         myFile = fopen("input.txt", "r");
 
 
-        printf("Welcome\n");
+        //printf("Welcome\n");
 
         int input;
         while(!feof(myFile))
@@ -91,7 +96,7 @@ int	taskid,	        /* task ID - also used as seed number */
             inputSize++;
         }
 
-        printf("Counted file size of %d\n", inputSize);
+        //printf("Counted file size of %d\n", inputSize);
 
         n = sqrt(inputSize);
 
@@ -124,6 +129,8 @@ int	taskid,	        /* task ID - also used as seed number */
 
             count++;
         }
+        
+        fclose(myFile);
     }
 
     // Broadcast the number of inputs
@@ -377,7 +384,7 @@ int	taskid,	        /* task ID - also used as seed number */
             free(receiveBuffer);
         }
         
-        printf("The final buffer is:\n");
+        /*printf("The final buffer is:\n");
         for(k = 0; k < n; k++)
         {
             for(i = 0; i < n; i++)
@@ -385,7 +392,7 @@ int	taskid,	        /* task ID - also used as seed number */
                 printf("%11d", inputValue[coordinateToIndex(i,k,n)]);
             }
             printf("\n");
-        }
+        }*/
     }
     else
     {
@@ -424,7 +431,24 @@ int	taskid,	        /* task ID - also used as seed number */
         free(sendBuffer);
     }
     
-    free(inputValue);
-
+    free(inputValue);    
+    
     MPI_Finalize();
+    
+    if(taskid == MASTER)
+    {
+        // Measure the execution time
+        clock_t endc = clock();
+        double time_spent = (double)(endc - begin) / CLOCKS_PER_SEC;
+
+          gettimeofday(&end, NULL);
+
+          printf("End wall clock: %10.8f\n", ((end.tv_sec * 1000000 + end.tv_usec)
+                  - (start.tv_sec * 1000000 + start.tv_usec)) / 1000000.0 );
+          
+        printf("Program with %d processes took %10.8f seconds\n", numtasks, time_spent);
+
+    }
+    
+    return 0;
 }

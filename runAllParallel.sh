@@ -1,0 +1,1 @@
+ for((n=1;n<=32;n++)); do i=$((n*n)); echo $i; mpirun -np $i P | grep 'took' | cut -d ' ' -f 3 | awk '{print $1"$i"}'; done
