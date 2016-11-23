@@ -80,12 +80,12 @@ int	taskid,	        /* task ID - also used as seed number */
         int input;
         while(!feof(myFile))
         {
-            int c = fscanf(myFile, "%d", &input);
+            int c = fscanf(myFile, "%d\t", &input);
 
             if(c != 1)
             {
                 char word[16];
-                fscanf(myFile, "%s", &word);
+                fscanf(myFile, "%s\t", &word);
             }
 
             inputSize++;

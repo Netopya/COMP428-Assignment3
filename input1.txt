@@ -1,0 +1,10 @@
+86	15	35	92	21	27	59	26	26	36	
+inf	67	inf	30	23	35	inf	inf	inf	69	
+93	11	29	21	inf	37	24	inf	13	inf	
+80	73	70	81	inf	inf	27	5	29	inf	
+24	82	14	34	43	87	inf	78	84	inf	
+54	32	76	39	inf	inf	94	95	34	67	
+inf	2	inf	52	1	86	65	44	inf	29	
+17	71	75	inf	inf	56	53	65	inf	19	
+inf	inf	32	inf	inf	inf	68	inf	inf	49	
+23	inf	46	21	79	64	inf	50	0	64	
