@@ -7,6 +7,12 @@
 
 #define MASTER 0        /* task ID of master task */
 
+// http://stackoverflow.com/questions/3437404/min-and-max-in-c
+#define min(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+     
 int coordinateToIndex(int x, int y, int n)
 {
     return x + (y * n);
@@ -166,16 +172,145 @@ int	taskid,	        /* task ID - also used as seed number */
             displs[i] = displs[i - 1] + scounts[i - 1];
         }
     }
+    
+    int kcounts[n];
+    int ncount = 0;
+    for(i = 0; i < n; i++)
+    {
+        if(displs[ncount] + scounts[ncount] == i)
+            ncount++;
+
+        kcounts[i] = ncount;
+    }
+    
+    /*
+    printf("Process lookup: ");
+    for(i = 0; i < n; i++)
+    {
+        printf("(%d:%d) ", i, kcounts[i]);
+    }
+    printf("\n");
+*/
 
     int point[2];
     indexToCoordinate(taskid, pn, point);
-    printf("Process %d is in section (%d, %d). X dpls %d and count %d. Y dpls %d and count %d.\n", taskid, point[0], point[1], displs[point[0]], scounts[point[0]], displs[point[1]], scounts[point[1]]);
+    printf("c Process %d is in section (%d, %d). X dpls %d and count %d. Y dpls %d and count %d.\n", taskid, point[0], point[1], displs[point[0]], scounts[point[0]], displs[point[1]], scounts[point[1]]);
 
-    int x, y;
+    MPI_Group world_group;
+    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+    
+    int ranks[np]
+    for(i = 0; i < np; i++)
+    {
+        ranks[i] = coordinateToIndex(i, point[1], np);
+    }
+    MPI_Group row_group;
+    MPI_Comm_split(MPI_COMM_WORLD, point[1], point[0], &row_comm);
+    printf("a Process %d: row comm: %d\n", taskid, row_comm);
+    
+    
+    MPI_Group col_group;
+    MPI_Comm_split(MPI_COMM_WORLD, point[0], point[1], &col_comm);
+    printf("b Process %d: col comm: %d\n", taskid, col_comm);
+    
+    int k, x, y;
     for(k = 0; k < n; k++)
     {
+        printf("Process: %d, k: %d\n", taskid, k);
+        
+        int k_in_p = kcounts[k];
+        int* rowbuffer = malloc(scounts[point[0]] * sizeof(int));
+        int* colbuffer = malloc(scounts[point[1]] * sizeof(int));
+        
+        if(point[1] == k_in_p)
+        {
+            for(i = 0; i < scounts[point[0]]; i++)
+            {
+                int index = coordinateToIndex(displs[point[0]] + i, k, n);
+                rowbuffer[i] = inputValue[index];
+            }
+        }
 
+        MPI_Bcast(&rowbuffer, scounts[k_in_p], MPI_INT, k_in_p, row_comm);
+        
+        if(point[0] == k_in_p)
+        {
+            for(i = 0; i < scounts[point[1]]; i++)
+            {
+                int index = coordinateToIndex(displs[point[1]] + i, k, n);
+                colbuffer[i] = inputValue[index];
+            }
+        }
+
+        MPI_Bcast(&colbuffer, scounts[k_in_p], MPI_INT, k_in_p, col_comm);
+        
+        for(y = 0; y < scounts[point[1]]; y++)
+        {
+            for(x = 0; x < scounts[point[0]]; x++)
+            {
+                //if(i == k || j == k || i == j)
+                //    continue;
+
+                inputValue[coordinateToIndex(x + displs[point[0]],y + displs[point[1]],n)] = 
+                    min(inputValue[coordinateToIndex(x + displs[point[0]],y + displs[point[1]],n)], 
+                    carefulIntAdd(rowbuffer[x], colbuffer[y]));
+            }
+        }
+        
+        free(rowbuffer);
+        free(colbuffer);
     }
+    
+    if(taskid == MASTER)
+    {
+        for(i = 1; i < numtasks; i++)
+        {
+            int ppoint[2];
+            indexToCoordinate(i, n, ppoint);
+            
+            int receiveBufferSize = scounts[ppoint[0]] * scounts[ppoint[1]];
+            int* receiveBuffer = malloc(receiveBufferSize * sizeof(int));
+            MPI_Recv(&receiveBuffer, receiveBufferSize, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            
+            for(y = 0; y < scounts[ppoint[1]]; y++)
+            {
+                for(x = 0; x < scounts[ppoint[0]]; x++)
+                {
+                    inputValue[coordinateToIndex(displs[ppoint[0]] + x, displs[ppoint[1]] + y, n)] = receiveBuffer[x + y];
+                }
+            }
+            
+            free(receiveBuffer);
+        }
+        
+        printf("The final buffer is:\n");
+        for(k = 0; k < n; k++)
+        {
+            for(i = 0; i < n; i++)
+            {
+                printf("%11d", inputValue[coordinateToIndex(i,k,n)]);
+            }
+            printf("\n");
+        }
+    }
+    else
+    {
+        int sendBufferSize = scounts[point[0]] * scounts[point[1]];
+        int* sendBuffer = malloc(sendBufferSize * sizeof(int));
+        
+        for(y = 0; y < scounts[point[1]]; y++)
+        {
+            for(x = 0; x < scounts[point[0]]; x++)
+            {
+                sendBuffer[x + y] = inputValue[coordinateToIndex(displs[point[0]] + x, displs[point[1]] + y, n)];
+            }
+        }
+        
+        MPI_Send(sendBuffer, sendBufferSize, MPI_INT, MASTER, 0, MPI_COMM_WORLD);
+        
+        free(sendBuffer);
+    }
+    
     free(inputValue);
 
     MPI_Finalize();
