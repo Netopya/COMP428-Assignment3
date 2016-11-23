@@ -443,8 +443,9 @@ int	taskid,	        /* task ID - also used as seed number */
 
           gettimeofday(&end, NULL);
 
-          printf("End wall clock: %10.8f\n", ((end.tv_sec * 1000000 + end.tv_usec)
-                  - (start.tv_sec * 1000000 + start.tv_usec)) / 1000000.0 );
+        float endtime = ((end.tv_sec * 1000000 + end.tv_usec)
+                  - (start.tv_sec * 1000000 + start.tv_usec)) / 1000000.0;
+        printf("End wall clock: %10.8f\n",  endtime);
           
         printf("Program with %d processes took %10.8f seconds\n", numtasks, time_spent);
 
