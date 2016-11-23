@@ -199,21 +199,19 @@ int	taskid,	        /* task ID - also used as seed number */
     MPI_Group world_group;
     MPI_Comm_group(MPI_COMM_WORLD, &world_group);
     
-    int ranks[pn];
-    for(i = 0; i < pn; i++)
+    int ranks[np]
+    for(i = 0; i < np; i++)
     {
-        ranks[i] = coordinateToIndex(i, point[1], pn);
+        ranks[i] = coordinateToIndex(i, point[1], np);
     }
     MPI_Group row_group;
-    MPI_Group_incl(world_group, pn, ranks, &row_group);    
+    MPI_Comm_split(MPI_COMM_WORLD, point[1], point[0], &row_comm);
+    printf("a Process %d: row comm: %d\n", taskid, row_comm);
     
-    for(i = 0; i < pn; i++)
-    {
-        ranks[i] = coordinateToIndex(point[0], i, pn);
-    }
     
     MPI_Group col_group;
-    MPI_Group_incl(world_group, pn, ranks, &col_group); 
+    MPI_Comm_split(MPI_COMM_WORLD, point[0], point[1], &col_comm);
+    printf("b Process %d: col comm: %d\n", taskid, col_comm);
     
     int k, x, y;
     for(k = 0; k < n; k++)
@@ -223,11 +221,6 @@ int	taskid,	        /* task ID - also used as seed number */
         int k_in_p = kcounts[k];
         int* rowbuffer = malloc(scounts[point[0]] * sizeof(int));
         int* colbuffer = malloc(scounts[point[1]] * sizeof(int));
-        
-        MPI_Comm row_comm;
-        MPI_Comm col_comm;
-        MPI_Comm_create_group(MPI_COMM_WORLD, row_group, 0, &row_comm);
-        MPI_Comm_create_group(MPI_COMM_WORLD, col_group, 0, &col_comm);
         
         if(point[1] == k_in_p)
         {
@@ -266,8 +259,6 @@ int	taskid,	        /* task ID - also used as seed number */
         
         free(rowbuffer);
         free(colbuffer);
-        MPI_Comm_free(&row_comm);
-        MPI_Comm_free(&col_comm);
     }
     
     if(taskid == MASTER)
