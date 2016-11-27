@@ -77,9 +77,6 @@ int	taskid,	        /* task ID - also used as seed number */
         FILE *myFile;
         myFile = fopen("input.txt", "r");
 
-
-        //printf("Welcome\n");
-
         int input;
         while(!feof(myFile))
         {
@@ -372,6 +369,23 @@ int	taskid,	        /* task ID - also used as seed number */
             
             free(receiveBuffer);
         }
+        
+        FILE *myFile;
+        myFile = fopen("output.txt", "w");
+
+        // Write the result to output.txt
+        int x,y;
+        for(y = 0; y < n; y++)
+        {
+            for(x = 0; x < n; x++)
+            {   
+                fprintf(myFile, "%d\t", inputValue[coordinateToIndex(x,y,n)]);
+            }
+             
+            fprintf(myFile, "\n");
+        }
+
+        fclose(myFile);
     }
     else
     {
