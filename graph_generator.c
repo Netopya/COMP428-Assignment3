@@ -6,6 +6,9 @@ This program generates a graph represented as an adjacency matrix which
 The number of nodes in the graph can be specified as an execution parameter
 The rate at which nodes are not connected can be set with the DISCONNECT_RATE
     and DISCONNECT_RATE_BASE variables
+The maximum weight for an edge can be specified with MAX_NUMBER. MAX_NUMBER
+    must be greater than 0 in order to generate an interesting graph.
+    (So that there are no 0 weights)
 **********************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +16,7 @@ The rate at which nodes are not connected can be set with the DISCONNECT_RATE
 #include <math.h>
 
 #define MAX_NUMBER 100
-#define DISCONNECT_RATE 30
+#define DISCONNECT_RATE 50
 #define DISCONNECT_RATE_BASE 100
 
 int main (int argc, char *argv[])
@@ -50,7 +53,7 @@ int main (int argc, char *argv[])
             int disconnectChance = rand() % DISCONNECT_RATE_BASE;
             
             if(disconnectChance > DISCONNECT_RATE)
-                fprintf(myFile, "%d\t", rand() % MAX_NUMBER); // Set the weight of the edge
+                fprintf(myFile, "%d\t", (rand() % (MAX_NUMBER - 1)) + 1); // Set the weight of the edge
             else
                 fprintf(myFile, "inf\t");
         }
