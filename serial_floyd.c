@@ -1,3 +1,12 @@
+/*********************************************************************
+Code for COMP 428 Assignment 3
+Michael Bilinsky 26992358
+This program performs the Floyd's All-Pairs Shortest Path algorithm on
+    a graph in a serial fashion
+The graph must be specified in "input.txt" as an adjacency matrix
+The results are written to "output.txt" as an adjacency matrix of
+    the weights of the shortest paths
+**********************************************************************/
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -115,6 +124,22 @@ int main (int argc, char *argv[])
         }
     }
 
+    myFile = fopen("output.txt", "w");
+    
+    // Write the result to output.txt
+    int x,y;
+    for(y = 0; y < n; y++)
+    {
+        for(x = 0; x < n; x++)
+        {   
+            fprintf(myFile, "%d\t", inputValue[coordinateToIndex(x,y,n)]);
+        }
+         
+        fprintf(myFile, "\n");
+    }
+
+    fclose(myFile);
+    
     free(inputValue);
     
     gettimeofday(&end, NULL);
