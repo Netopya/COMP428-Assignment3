@@ -1,3 +1,12 @@
+/*********************************************************************
+Code for COMP 428 Assignment 3
+Michael Bilinsky 26992358
+This program performs the Floyd's All-Pairs Shortest Path algorithm on
+    a graph in a parallel fashion with row and column broadcasts
+The graph must be specified in "input.txt" as an adjacency matrix
+The results are written to "output.txt" as an adjacency matrix of
+    the weights of the shortest paths
+**********************************************************************/
 #include "mpi.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -168,6 +177,7 @@ int	taskid,	        /* task ID - also used as seed number */
         }
     }
 
+    // Find the corresponding k for a processor's dimension
     int kcounts[n];
     int ncount = 0;
     for(i = 0; i < n; i++)
@@ -181,6 +191,9 @@ int	taskid,	        /* task ID - also used as seed number */
     int point[2];
     indexToCoordinate(taskid, pn, point);
 
+    // Place each process into two comm worlds
+    // Each processor will be in a comm world with all the other
+    //     processors in its row and another for its column
     MPI_Comm row_comm;
     MPI_Comm_split(MPI_COMM_WORLD, point[1], point[0], &row_comm);
 
@@ -190,11 +203,15 @@ int	taskid,	        /* task ID - also used as seed number */
     int k, x, y;
     for(k = 0; k < n; k++)
     {
+        // Find the processor dimension responsible for this k
         int k_in_p = kcounts[k];
 
+        // Allocate the buffers
         int* rowbuffer = malloc(scounts[point[0]] * sizeof(int));
         int* colbuffer = malloc(scounts[point[1]] * sizeof(int));
 
+        // If the processor's Y coordinate matches, then it
+        // has a k corresponding to a row that needs to be broadcasted
         if(point[1] == k_in_p)
         {
             for(i = 0; i < scounts[point[0]]; i++)
@@ -204,8 +221,11 @@ int	taskid,	        /* task ID - also used as seed number */
             }
         }
 
+        // Perform the column wise broadcast of the row
         MPI_Bcast(rowbuffer, scounts[point[0]], MPI_INT, k_in_p, col_comm);
 
+        // If the processor's X coordinate matches, then it
+        // has a k corresponding to a column that needs to be broadcasted
         if(point[0] == k_in_p)
         {
             for(i = 0; i < scounts[point[1]]; i++)
@@ -215,8 +235,10 @@ int	taskid,	        /* task ID - also used as seed number */
             }
         }
 
+        // Perform the row wise broadcast of the column
         MPI_Bcast(colbuffer, scounts[point[1]], MPI_INT, k_in_p, row_comm);
 
+        // Locally perform the Floyd's all pair calculation
         for(y = 0; y < scounts[point[1]]; y++)
         {
             for(x = 0; x < scounts[point[0]]; x++)
@@ -229,8 +251,6 @@ int	taskid,	        /* task ID - also used as seed number */
                 inputValue[coordinateToIndex(real_x,real_y,n)] =
                     min(inputValue[coordinateToIndex(real_x,real_y,n)],
                     carefulIntAdd(rowbuffer[x], colbuffer[y]));
-
-
             }
         }
 
@@ -238,10 +258,12 @@ int	taskid,	        /* task ID - also used as seed number */
         free(colbuffer);
     }
 
+    // The master will collect the data from all the processes
     if(taskid == MASTER)
     {
         for(i = 1; i < numtasks; i++)
         {
+            // Find the coordinate of the process we are reading from
             int ppoint[2];
             indexToCoordinate(i, pn, ppoint);
 
@@ -280,6 +302,8 @@ int	taskid,	        /* task ID - also used as seed number */
     }
     else
     {
+        // Non-master processes figure out the data they were responsible
+        // for a transmit it the the master
         int sendBufferSize = scounts[point[0]] * scounts[point[1]];
         int* sendBuffer = malloc(sendBufferSize * sizeof(int));
 
@@ -300,6 +324,7 @@ int	taskid,	        /* task ID - also used as seed number */
 
     if(taskid == MASTER)
     {
+        // If the graph is small output it to the console
         if(n < 20)
         {
             printf("The final buffer is:\n");
