@@ -344,7 +344,7 @@ int	taskid,	        /* task ID - also used as seed number */
         float endtime = ((end.tv_sec * 1000000 + end.tv_usec)
                   - (start.tv_sec * 1000000 + start.tv_usec)) / 1000000.0;
 
-        printf("Program with %d processes took %10.8f seconds\n", numtasks, endtime);
+        printf("Program with %d processes took %10.9f seconds\n", numtasks, endtime);
     }
 
     free(inputValue);

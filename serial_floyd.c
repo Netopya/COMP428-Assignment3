@@ -148,7 +148,7 @@ int main (int argc, char *argv[])
     float endtime = ((end.tv_sec * 1000000 + end.tv_usec)
         - (start.tv_sec * 1000000 + start.tv_usec)) / 1000000.0;
     
-    printf("\nProgram took %10.8f seconds\n",endtime);
+    printf("\nProgram took %10.9f seconds\n",endtime);
     
     return 0;
 }
