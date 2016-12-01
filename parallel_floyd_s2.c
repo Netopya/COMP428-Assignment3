@@ -233,7 +233,7 @@ int	taskid,	        /* task ID - also used as seed number */
                 if(i == point[1])
                     continue;
 
-                MPI_Isend(rowbuffer, scounts[point[0]], MPI_INT, i, 0, col_comm, &request);
+                MPI_Isend(rowbuffer, scounts[point[0]], MPI_INT, i, k, col_comm, &request);
             }            
         }
         
@@ -254,18 +254,18 @@ int	taskid,	        /* task ID - also used as seed number */
                 if(i == point[0])
                     continue;
 
-                MPI_Isend(colbuffer, scounts[point[1]], MPI_INT, i, 0, row_comm, &request);
+                MPI_Isend(colbuffer, scounts[point[1]], MPI_INT, i, k, row_comm, &request);
             } 
         }
 
         if(point[1] != k_in_p)
         {
-            MPI_Recv(rowbuffer, scounts[point[0]], MPI_INT, k_in_p, 0, col_comm, MPI_STATUS_IGNORE);
+            MPI_Recv(rowbuffer, scounts[point[0]], MPI_INT, k_in_p, k, col_comm, MPI_STATUS_IGNORE);
         }
         
         if(point[0] != k_in_p)
         {
-            MPI_Recv(colbuffer, scounts[point[1]], MPI_INT, k_in_p, 0, row_comm, MPI_STATUS_IGNORE);
+            MPI_Recv(colbuffer, scounts[point[1]], MPI_INT, k_in_p, k, row_comm, MPI_STATUS_IGNORE);
         }
 
         // Locally perform the Floyd's all pair calculation
